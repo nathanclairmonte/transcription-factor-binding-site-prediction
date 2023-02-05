@@ -26,8 +26,8 @@ CHR_FOLDER = DATA_FOLDER + "hg19/"
 
 # list of transcription factors to extract samples for
 # add any TF's you'd like to extract samples for to this list
-# my project focused on the CTCF transcription factor, hence its inclusion here
-tfs = ['CTCF']
+# my project focused on the UAK42 transcription factor, hence its inclusion here
+tfs = ['UAK42']
 
 if (__name__=="__main__"):
     # write Jaspar files for the PWM of the chosen transcription factors
