@@ -7,7 +7,6 @@ import numpy as np
 
 # CONSTANTS
 curr = os.path.dirname(__file__)
-# DATA_FOLDER = "../data/"
 DATA_FOLDER = os.path.join(curr, "../data/")
 
 # function to help print time elapsed

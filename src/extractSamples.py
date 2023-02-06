@@ -20,10 +20,6 @@ DATA_FOLDER = os.path.join(curr, "../data/")
 OUT_FOLDER = os.path.join(curr, "../outputs/")
 CHR_FOLDER = DATA_FOLDER + "hg19/"
 
-# DATA_FOLDER = "../data/"
-# CHR_FOLDER = DATA_FOLDER + "hg19/"
-# OUT_FOLDER = "../outputs/"
-
 # list of transcription factors to extract samples for
 # add any TF's you'd like to extract samples for to this list
 # my project focused on the UAK42 transcription factor, hence its inclusion here
