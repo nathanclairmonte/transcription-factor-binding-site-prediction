@@ -6,6 +6,8 @@ import re
 import numpy as np
 
 # CONSTANTS
+
+# data folder location
 curr = os.path.dirname(__file__)
 DATA_FOLDER = os.path.join(curr, "../data/")
 

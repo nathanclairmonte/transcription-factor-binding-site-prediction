@@ -11,8 +11,12 @@ from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_sc
 import helperFunctions as hf
 
 # CONSTANTS
+
+# data folder location
 curr = os.path.dirname(__file__)
 DATA_FOLDER = os.path.join(curr, "../data/")
+
+# whether or not to print while running
 VERBOSE = False
 
 # list of models to investigate
