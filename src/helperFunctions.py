@@ -9,6 +9,9 @@ import numpy as np
 curr = os.path.dirname(__file__)
 DATA_FOLDER = os.path.join(curr, "../data/")
 
+
+# ---------------- General helper functions ----------------
+
 # function to help print time elapsed
 def stringTime(start, end, show_ms=False):
     """
@@ -88,6 +91,9 @@ def removeLineBreaks(raw):
     for i in range(len(raw)):
         raw[i] = re.sub(r'\n', '', raw[i])
     return raw
+
+
+# ---------------- Sample extraction helper functions ----------------
 
 def getBindingSiteLocs(TF, chromosome='chr21'):
     """
@@ -190,3 +196,137 @@ def getActiveRegions(chromosome='chr21'):
             active_regions.append([int(temp[1]), int(temp[2])])
     
     return active_regions
+
+
+# ---------------- Data processing/model exploration helper functions ----------------
+
+import pandas as pd
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import confusion_matrix
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+def loadPhysicalProperty(file):
+    """
+    Loads a physical property text file downloadoed from DNAShape and puts it into a Pandas dataframe.
+
+    Args:
+        file (str): Filepath of the physical property text file to be loaded
+
+    Returns:
+        (pd.DataFrame): The physical properties loaded into a Pandas dataframe
+    """
+    raw = loadRaw(file)
+    raw = removeLineBreaks(raw)
+    properties = []
+    for r in raw:
+        if ('>' not in r):
+            properties.append(r.split(','))
+
+    return pd.DataFrame(properties).apply(pd.to_numeric, errors='coerce').dropna(axis=1)
+
+def getFeatsScaled(mgw_file, roll_file, pro_twist_file, hel_twist_file):
+    """
+    Takes filepaths for all 4 physical property files (mgw, roll, proT, helT) and concats them all into one big features matrix.
+    Concatenation is along axis=1. Values are all scaled with StandardScaler before concatenation.
+    Final output matrix size will be num_samples x (mgw.shape[1]+roll.shape[1]+pro_twist.shape[1]+hel_twist.shape[1])
+
+    Args:
+        mgw_file (str): Filepath to the mgw properties
+        roll_file (str): Filepath to the roll properties
+        pro_twist_file (str): Filepath to the pro_twist properties
+        hel_twist_file (str): Filepath to the hel_twist properties
+
+    Returns:
+        all_props (pd.DataFrame): All the scaled physical properties concatenated together along axis=1
+    """
+    mgw = loadPhysicalProperty(mgw_file)
+    roll = loadPhysicalProperty(roll_file)
+    pro_twist = loadPhysicalProperty(pro_twist_file)
+    hel_twist = loadPhysicalProperty(hel_twist_file)
+
+    scaler = StandardScaler()
+    mgw = pd.DataFrame(scaler.fit_transform(mgw.values))
+    roll = pd.DataFrame(scaler.fit_transform(roll.values))
+    pro_twist = pd.DataFrame(scaler.fit_transform(pro_twist.values))
+    hel_twist = pd.DataFrame(scaler.fit_transform(hel_twist.values))
+
+    all_props = pd.concat([mgw, roll, pro_twist, hel_twist], axis=1)
+
+    return all_props
+
+def getFeatsAveraged(mgw_file, roll_file, pro_twist_file, hel_twist_file):
+    """
+    Takes filepaths for all 4 physical property files (mgw, roll, proT, helT) and concats them all into one big features matrix.
+    Concatenation is along axis=1. Values in each row are averaged before concatenation.
+    Final output matrix size will be num_samples x 4
+
+    Args:
+        mgw_file (str): Filepath to the mgw properties
+        roll_file (str): Filepath to the roll properties
+        pro_twist_file (str): Filepath to the pro_twist properties
+        hel_twist_file (str): Filepath to the hel_twist properties
+
+    Returns:
+        all_props (pd.DataFrame): All the averaged physical properties concatenated together along axis=1
+    """
+    mgw = loadPhysicalProperty(mgw_file).mean(axis=1)
+    roll = loadPhysicalProperty(roll_file).mean(axis=1)
+    pro_twist = loadPhysicalProperty(pro_twist_file).mean(axis=1)
+    hel_twist = loadPhysicalProperty(hel_twist_file).mean(axis=1)
+
+    all_props = pd.concat([mgw, roll, pro_twist, hel_twist], axis=1)
+
+    return all_props
+
+def getFeatsScaledAndAveraged(mgw_file, roll_file, pro_twist_file, hel_twist_file):
+    """
+    Takes filepaths for all 4 physical property files (mgw, roll, proT, helT) and concats them all into one big features matrix.
+    Concatenation is along axis=1. Values in each row are scaled and then averaged before concatenation.
+    Final output matrix size will be num_samples x 4
+
+    Args:
+        mgw_file (str): Filepath to the mgw properties
+        roll_file (str): Filepath to the roll properties
+        pro_twist_file (str): Filepath to the pro_twist properties
+        hel_twist_file (str): Filepath to the hel_twist properties
+
+    Returns:
+        all_props (pd.DataFrame): All the averaged physical properties concatenated together along axis=1
+    """
+    mgw = loadPhysicalProperty(mgw_file)
+    roll = loadPhysicalProperty(roll_file)
+    pro_twist = loadPhysicalProperty(pro_twist_file)
+    hel_twist = loadPhysicalProperty(hel_twist_file)
+
+    scaler = StandardScaler()
+    mgw = pd.DataFrame(scaler.fit_transform(mgw.values))
+    roll = pd.DataFrame(scaler.fit_transform(roll.values))
+    pro_twist = pd.DataFrame(scaler.fit_transform(pro_twist.values))
+    hel_twist = pd.DataFrame(scaler.fit_transform(hel_twist.values))
+
+    mgw = mgw.mean(axis=1)
+    roll = roll.mean(axis=1)
+    pro_twist = pro_twist.mean(axis=1)
+    hel_twist = hel_twist.mean(axis=1)
+
+    all_props = pd.concat([mgw, roll, pro_twist, hel_twist], axis=1)
+
+    return all_props
+
+# adapted from https://stackoverflow.com/questions/19233771/sklearn-plot-confusion-matrix-with-labels
+def plot_confusion_matrix(y_test, y_pred):
+    # get confusion matrix from predictions
+    cm = confusion_matrix(y_test, y_pred)
+
+    # plot confusion matrix
+    ax = plt.subplot()
+    sns.heatmap(cm, annot=True, fmt='g', ax=ax, cmap='Greens')
+    
+    # labels, title and ticks
+    ax.set_xlabel('Predicted')
+    ax.set_ylabel('True')
+    ax.xaxis.set_ticklabels(['positive', 'negative'])
+    ax.yaxis.set_ticklabels(['positive', 'negative'])
+    ax.set_title('Confusion Matrix')
+    plt.show()
